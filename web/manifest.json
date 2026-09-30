@@ -1,0 +1,11 @@
+{
+  "name": "Indovoca",
+  "short_name": "Indovoca",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F8F9FF",
+  "theme_color": "#760009",
+  "description": "Indonesian vocabulary learning app",
+  "orientation": "portrait-primary",
+  "icons": []
+}
