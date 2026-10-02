@@ -31,33 +31,96 @@ class AppDatabase {
     final dbPath = kIsWeb ? 'indovoca.db' : p.join(await getDatabasesPath(), 'indovoca.db');
     final db = await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE vocabulary (
-            word_id INTEGER PRIMARY KEY,
-            indonesian TEXT NOT NULL,
-            translation TEXT NOT NULL,
-            pos TEXT NOT NULL,
-            frequency_rank INTEGER NOT NULL,
-            usage_note TEXT NOT NULL,
-            collocation_idn TEXT NOT NULL,
-            collocation_eng TEXT NOT NULL,
-            example_sentence_idn TEXT NOT NULL,
-            example_sentence_eng TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE app_meta (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-          )
-        ''');
-        await db.execute('CREATE INDEX idx_vocab_search ON vocabulary(indonesian, translation)');
+        await _createTables(db);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE user_progress (
+              user_id TEXT,
+              word_id INTEGER,
+              status INTEGER,
+              leitner_box INTEGER,
+              correct_count INTEGER,
+              incorrect_count INTEGER,
+              last_reviewed INTEGER,
+              next_due INTEGER,
+              is_favorite INTEGER,
+              PRIMARY KEY (user_id, word_id)
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE user_summary (
+              user_id TEXT PRIMARY KEY,
+              total_words_seen INTEGER,
+              total_words_learned INTEGER,
+              total_words_mastered INTEGER,
+              furthest_rank INTEGER,
+              current_streak INTEGER,
+              longest_streak INTEGER,
+              last_study_date TEXT,
+              updated_at INTEGER
+            )
+          ''');
+        }
       },
     );
     await _importFromJsonIfEmpty(db);
     return db;
+  }
+
+  Future<void> _createTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE vocabulary (
+        word_id INTEGER PRIMARY KEY,
+        indonesian TEXT NOT NULL,
+        translation TEXT NOT NULL,
+        pos TEXT NOT NULL,
+        frequency_rank INTEGER NOT NULL,
+        usage_note TEXT NOT NULL,
+        collocation_idn TEXT NOT NULL,
+        collocation_eng TEXT NOT NULL,
+        example_sentence_idn TEXT NOT NULL,
+        example_sentence_eng TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_vocab_search ON vocabulary(indonesian, translation)');
+    
+    await db.execute('''
+      CREATE TABLE user_progress (
+        user_id TEXT,
+        word_id INTEGER,
+        status INTEGER,
+        leitner_box INTEGER,
+        correct_count INTEGER,
+        incorrect_count INTEGER,
+        last_reviewed INTEGER,
+        next_due INTEGER,
+        is_favorite INTEGER,
+        PRIMARY KEY (user_id, word_id)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE user_summary (
+        user_id TEXT PRIMARY KEY,
+        total_words_seen INTEGER,
+        total_words_learned INTEGER,
+        total_words_mastered INTEGER,
+        furthest_rank INTEGER,
+        current_streak INTEGER,
+        longest_streak INTEGER,
+        last_study_date TEXT,
+        updated_at INTEGER
+      )
+    ''');
   }
 
   Future<void> _importFromJsonIfEmpty(Database db) async {

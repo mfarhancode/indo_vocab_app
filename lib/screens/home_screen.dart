@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 22,
                     backgroundColor: cPrimary,
                     child: Text('JD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),

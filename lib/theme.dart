@@ -7,8 +7,11 @@ const cSurfaceHigh = Color(0xFFDEE9FC);
 const cSurfaceHighest = Color(0xFFD9E3F6);
 const cOnSurface = Color(0xFF121C2A);
 const cOnSurfaceVariant = Color(0xFF59413E);
-const cPrimary = Color(0xFF760009);
-const cPrimaryContainer = Color(0xFF991B1B);
+const cPrimary = Color(0xFF00796B);
+
+Color get cPrimaryContainer => 
+    HSLColor.fromColor(cPrimary).withLightness((HSLColor.fromColor(cPrimary).lightness - 0.2).clamp(0.0, 1.0)).toColor();
+
 const cSecondary = Color(0xFF904D00);
 const cSecondaryContainer = Color(0xFFFE932C);
 const cSecondaryFixed = Color(0xFFFFDCC3);

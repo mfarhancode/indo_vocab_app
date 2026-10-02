@@ -14,7 +14,7 @@ class IndovocaApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: cSurface,
-        colorScheme: const ColorScheme.light(
+        colorScheme: ColorScheme.light(
           primary: cPrimary,
           onPrimary: Colors.white,
           primaryContainer: cPrimaryContainer,

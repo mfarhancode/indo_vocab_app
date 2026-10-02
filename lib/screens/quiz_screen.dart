@@ -40,7 +40,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     decoration: BoxDecoration(color: cSurfaceContainer, borderRadius: BorderRadius.circular(18)),
                     child: Row(
                       children: [
-                        const Icon(Icons.psychology_alt_rounded, color: cPrimary),
+                        Icon(Icons.psychology_alt_rounded, color: cPrimary),
                         const SizedBox(width: 10),
                         Text('Affixation Reflex', style: t(14, FontWeight.w700, cPrimary)),
                       ],

@@ -45,7 +45,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         color: cPrimary.withOpacity(.10),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.translate_rounded, color: cPrimary, size: 36),
+                      child: Icon(Icons.translate_rounded, color: cPrimary, size: 36),
                     ),
                   ),
                   const SizedBox(height: 18),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'highlighted_sentence.dart';
 import '../models/vocabulary_word.dart';
 import '../theme.dart';
 
@@ -40,12 +41,14 @@ class WordDetailsView extends StatelessWidget {
             label: 'Collocation',
             body: word.collocationIdn,
             caption: word.collocationEng,
+            targetWord: word.indonesian,
           ),
         if (word.hasExample)
           _Block(
             label: 'Example',
             body: word.exampleSentenceIdn,
             caption: word.exampleSentenceEng,
+            targetWord: word.indonesian,
           ),
         if (!word.hasExtras)
           Text(
@@ -74,10 +77,17 @@ class _Chip extends StatelessWidget {
 }
 
 class _Block extends StatelessWidget {
-  const _Block({required this.label, required this.body, this.caption});
+  const _Block({
+    required this.label,
+    required this.body,
+    this.caption,
+    this.targetWord,
+  });
+
   final String label;
   final String body;
   final String? caption;
+  final String? targetWord;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +98,15 @@ class _Block extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: t(11, FontWeight.w800, cPrimary)),
           const SizedBox(height: 6),
-          if (body.trim().isNotEmpty) Text(body, style: t(15, FontWeight.w600, cOnSurface, height: 1.45)),
+          if (body.trim().isNotEmpty)
+            targetWord != null
+                ? HighlightedSentence(
+                    sentence: body,
+                    targetWord: targetWord!,
+                    defaultStyle: t(15, FontWeight.w500, cOnSurface, height: 1.45),
+                    highlightStyle: t(15, FontWeight.w800, cPrimary, height: 1.45),
+                  )
+                : Text(body, style: t(15, FontWeight.w600, cOnSurface, height: 1.45)),
           if (caption != null && caption!.trim().isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(caption!, style: t(13, FontWeight.w500, cOnSurfaceVariant, height: 1.4)),

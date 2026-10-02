@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/vocabulary_repository.dart';
 import '../models/vocabulary_word.dart';
 import '../theme.dart';
+import '../widgets/highlighted_sentence.dart';
 import 'word_detail_screen.dart';
 
 class DictionaryScreen extends StatefulWidget {
@@ -92,7 +93,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   future: futureWords,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(child: CircularProgressIndicator(color: cPrimary));
+                      return Center(child: CircularProgressIndicator(color: cPrimary));
                     }
                     if (snapshot.hasError || !snapshot.hasData) {
                       return Center(child: Text('Could not load dictionary.', style: t(14, FontWeight.w600, cError)));
@@ -128,7 +129,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                                       color: cPrimary.withOpacity(.08),
                                       borderRadius: BorderRadius.circular(13),
                                     ),
-                                    child: const Icon(Icons.menu_book_rounded, color: cPrimary),
+                                    child: Icon(Icons.menu_book_rounded, color: cPrimary),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -138,6 +139,17 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                                         Text(word.indonesian, style: t(17, FontWeight.w700, cOnSurface)),
                                         const SizedBox(height: 3),
                                         Text(word.translation, style: t(13, FontWeight.w500, cOnSurfaceVariant)),
+                                        if (word.hasExample) ...[
+                                          const SizedBox(height: 5),
+                                          HighlightedSentence(
+                                            sentence: word.exampleSentenceIdn,
+                                            targetWord: word.indonesian,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            defaultStyle: t(12, FontWeight.w500, cOutline, height: 1.3),
+                                            highlightStyle: t(12, FontWeight.w700, cPrimary, height: 1.3),
+                                          ),
+                                        ],
                                         const SizedBox(height: 5),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

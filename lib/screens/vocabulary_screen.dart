@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../data/vocabulary_repository.dart';
+import '../data/user_progress_repository.dart';
 import '../models/vocabulary_word.dart';
 import '../theme.dart';
+import '../widgets/highlighted_sentence.dart';
 import '../widgets/word_details.dart';
 
 class VocabularyScreen extends StatefulWidget {
@@ -17,21 +18,25 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   int known = 0;
   int learning = 0;
   final Set<int> bookmarked = {};
+  List<VocabularyWord>? _loadedWords;
 
   @override
   void initState() {
     super.initState();
-    futureWords = VocabularyRepository.load();
+    futureWords = UserProgressRepository.getStudySession(20);
   }
 
-  void next(int total, bool isKnown) {
+  void next(int wordId, bool isKnown) async {
+    // Fire and forget updating the progress
+    UserProgressRepository.updateProgress(wordId, isKnown);
+
     setState(() {
       if (isKnown) {
         known++;
       } else {
         learning++;
       }
-      card = (card + 1) % total;
+      card++;
     });
   }
 
@@ -42,15 +47,13 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
         title: Text('Vocabulary', style: t(18, FontWeight.w700, cOnSurface)),
         actions: [
-          FutureBuilder<List<VocabularyWord>>(
-            future: futureWords,
-            builder: (_, snap) => Center(
+          if (_loadedWords != null && card < _loadedWords!.length)
+            Center(
               child: Text(
-                snap.hasData ? '${card + 1} / ${snap.data!.length}' : 'Loading…',
+                '${card + 1} / ${_loadedWords!.length}',
                 style: t(12, FontWeight.w700, cOnSurfaceVariant),
               ),
             ),
-          ),
           const SizedBox(width: 16),
         ],
       ),
@@ -58,13 +61,35 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         future: futureWords,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator(color: cPrimary));
+            return Center(child: CircularProgressIndicator(color: cPrimary));
           }
           if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Could not load vocabulary.', style: t(15, FontWeight.w600, cError)));
+            return Center(child: Text('Could not load vocabulary or nothing to study.', style: t(15, FontWeight.w600, cError)));
           }
-          final words = snapshot.data!;
-          final word = words[card % words.length];
+          _loadedWords = snapshot.data!;
+          final words = _loadedWords!;
+          
+          if (card >= words.length) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_outline, size: 64, color: cPrimary),
+                  const SizedBox(height: 16),
+                  Text('Session Complete!', style: t(24, FontWeight.w800, cOnSurface)),
+                  const SizedBox(height: 8),
+                  Text('You learned $known words and are still learning $learning words.', style: t(14, FontWeight.w500, cOnSurfaceVariant)),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Back to Home'),
+                  )
+                ],
+              ),
+            );
+          }
+          
+          final word = words[card];
           return SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -128,32 +153,65 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                               borderRadius: BorderRadius.circular(25),
                               border: Border.all(color: cSurfaceContainer),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(word.indonesian, textAlign: TextAlign.center, style: t(34, FontWeight.w800, cOnSurface)),
-                                const SizedBox(height: 14),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                                  decoration: BoxDecoration(color: cSecondaryFixed, borderRadius: BorderRadius.circular(8)),
-                                  child: Text(word.pos, style: t(11, FontWeight.w700, cSecondary)),
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  word.translation,
-                                  textAlign: TextAlign.center,
-                                  style: t(18, FontWeight.w600, cOnSurfaceVariant, height: 1.4),
-                                ),
-                                const SizedBox(height: 18),
-                                TextButton.icon(
-                                  onPressed: word.hasExtras ? () => showWordExtrasSheet(context, word) : null,
-                                  icon: const Icon(Icons.menu_book_outlined, size: 18),
-                                  label: Text(
-                                    word.hasExtras ? 'Example & collocation' : 'No extra notes',
-                                    style: t(13, FontWeight.w700, word.hasExtras ? cPrimary : cOnSurfaceVariant),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(word.indonesian, textAlign: TextAlign.center, style: t(34, FontWeight.w800, cOnSurface)),
+                                  const SizedBox(height: 14),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                                    decoration: BoxDecoration(color: cSecondaryFixed, borderRadius: BorderRadius.circular(8)),
+                                    child: Text(word.pos, style: t(11, FontWeight.w700, cSecondary)),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    word.translation,
+                                    textAlign: TextAlign.center,
+                                    style: t(18, FontWeight.w600, cOnSurfaceVariant, height: 1.4),
+                                  ),
+                                  if (word.hasExample) ...[
+                                    const SizedBox(height: 18),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: cSurfaceLow,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: cSurfaceContainer),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          HighlightedSentence(
+                                            sentence: word.exampleSentenceIdn,
+                                            targetWord: word.indonesian,
+                                            textAlign: TextAlign.center,
+                                            defaultStyle: t(14, FontWeight.w500, cOnSurface, height: 1.4),
+                                            highlightStyle: t(14, FontWeight.w800, cPrimary, height: 1.4),
+                                          ),
+                                          if (word.exampleSentenceEng.trim().isNotEmpty) ...[
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              word.exampleSentenceEng,
+                                              textAlign: TextAlign.center,
+                                              style: t(12, FontWeight.w500, cOnSurfaceVariant, height: 1.35),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 18),
+                                  TextButton.icon(
+                                    onPressed: word.hasExtras ? () => showWordExtrasSheet(context, word) : null,
+                                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                                    label: Text(
+                                      word.hasExtras ? 'Usage & collocation' : 'No extra notes',
+                                      style: t(13, FontWeight.w700, word.hasExtras ? cPrimary : cOnSurfaceVariant),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -163,7 +221,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: () => next(words.length, false),
+                              onPressed: () => next(word.wordId, false),
                               icon: const Icon(Icons.refresh, size: 18),
                               label: const Text('Still learning'),
                               style: OutlinedButton.styleFrom(
@@ -178,7 +236,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: FilledButton.icon(
-                              onPressed: () => next(words.length, true),
+                              onPressed: () => next(word.wordId, true),
                               icon: const Icon(Icons.check_circle, size: 18),
                               label: const Text('I know it!'),
                               style: FilledButton.styleFrom(

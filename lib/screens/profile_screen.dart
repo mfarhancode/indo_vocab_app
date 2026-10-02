@@ -27,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 30,
                       backgroundColor: cPrimary,
                       child: Text('JD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
